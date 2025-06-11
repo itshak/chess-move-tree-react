@@ -162,29 +162,25 @@ describe("MoveTree", () => {
     });
 
     it("should correctly parse the initial multi-level structure", () => {
-      // Top-level variations: 1. e4 and 1. d4
       expect(tree.root.children).toHaveLength(2);
       const e4Node = tree.root.children.find((m) => m.san === "e4");
       const d4Node = tree.root.children.find((m) => m.san === "d4");
       expect(e4Node).toBeDefined();
       expect(d4Node).toBeDefined();
 
-      // After 1. e4, variations are 1... e5 and 1... c5
       expect(e4Node!.children).toHaveLength(2);
       const e5Node = e4Node!.children.find((m) => m.san === "e5");
       const c5Node = e4Node!.children.find((m) => m.san === "c5");
       expect(e5Node).toBeDefined();
       expect(c5Node).toBeDefined();
 
-      // Check a deeply nested variation: 1. d4 Nf6 2. c4 g6 3. Nc3 (variation is 3. Nf3)
-      const g6Node = d4Node!.children[0].children[0].children[0]; // d4 -> Nf6 -> c4 -> g6
+      const g6Node = d4Node!.children[0].children[0].children[0];
       expect(g6Node.san).toBe("g6");
       expect(g6Node.children.map((m) => m.san)).toContain("Nc3");
       expect(g6Node.children.map((m) => m.san)).toContain("Nf3");
     });
 
     it("should allow navigation across completely different branches", () => {
-      // 1. Start by navigating deep into the 1. d4 line
       const nf3VarPath = ["d4", "Nf6", "c4", "g6", "Nf3", "Bg7"];
       let currentNode = tree.root;
       for (const san of nf3VarPath) {
@@ -195,14 +191,12 @@ describe("MoveTree", () => {
       }
       expect(tree.currentNode.san).toBe("Bg7");
 
-      // 2. Now, find a node in the 1. e4 -> 1... c5 line and jump to it
       const e4Node = tree.root.children.find((m) => m.san === "e4")!;
       const c5Node = e4Node.children.find((m) => m.san === "c5")!;
       const d6VarNode = c5Node.children
         .find((m) => m.san === "Nf3")!
         .children.find((m) => m.san === "d6")!;
 
-      // 3. Jump across the tree
       tree.goToNode(d6VarNode.id);
       expect(tree.currentNode.san).toBe("d6");
       expect(tree.currentNode.parent!.san).toBe("Nf3");
@@ -210,22 +204,18 @@ describe("MoveTree", () => {
     });
 
     it("should add a new variation in the middle of a line", () => {
-      // 1. Navigate to 1. e4 e5 2. Nf3
       const e4Node = tree.root.children.find((m) => m.san === "e4")!;
       const e5Node = e4Node.children.find((m) => m.san === "e5")!;
       const nf3Node = e5Node.children.find((m) => m.san === "Nf3")!;
       tree.goToNode(nf3Node.id);
 
-      // 2. From this position, only 2... Nc6 is a known variation
       expect(tree.currentNode.children).toHaveLength(1);
       expect(tree.currentNode.children[0].san).toBe("Nc6");
 
-      // 3. Add a new move (Petrov's Defense)
       const moveResult = tree.addMove("Nf6");
       expect(moveResult).not.toBeNull();
       expect(tree.currentNode.san).toBe("Nf6");
 
-      // 4. Go back and check the variations from the parent
       tree.goBack();
       expect(tree.currentNode.id).toBe(nf3Node.id);
       expect(tree.currentNode.children).toHaveLength(2);
@@ -235,21 +225,17 @@ describe("MoveTree", () => {
     });
 
     it("should correctly extend the end of the main line", () => {
-      // 1. Navigate to the last move of the PGN's main line: 4. Ng5
       tree.goToNode(
         tree.root.children[0].children[0].children[0].children[0].children[0].id
       );
       expect(tree.currentNode.san).toBe("Ng5");
 
-      // 2. It should have no children yet
       expect(tree.currentNode.children).toHaveLength(0);
 
-      // 3. Add the next logical move
       const moveResult = tree.addMove("d5");
       expect(moveResult).not.toBeNull();
       expect(tree.currentNode.san).toBe("d5");
 
-      // 4. Go back and verify the parent now has one child
       tree.goBack();
       expect(tree.currentNode.san).toBe("Ng5");
       expect(tree.currentNode.children).toHaveLength(1);

@@ -1,36 +1,21 @@
+// src/hooks/useMoveTree.ts
+import { useState, useRef, useCallback, useMemo } from "react";
+
+// src/lib/MoveTree.ts
 import { Chess } from "chess.js";
-import { MoveNode } from "./MoveNode";
 import { PgnReader } from "@mliebelt/pgn-reader";
 import PgnWriter from "@mliebelt/pgn-writer";
-
-const generateId = () => Math.random().toString(36).substring(2, 9);
-
-export class MoveTree {
-  private chess: Chess;
-  public root: MoveNode;
-  public currentNode: MoveNode;
-
-  constructor(
-    fen: string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-  ) {
+var generateId = () => Math.random().toString(36).substring(2, 9);
+var MoveTree = class {
+  constructor(fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1") {
     this.chess = new Chess(fen);
     this.root = this.createNode(null, "start", fen, "a0", "a0");
     this.currentNode = this.root;
   }
-
-  private createNode(
-    parent: MoveNode | null,
-    san: string,
-    fen: string,
-    from: string,
-    to: string
-  ): MoveNode {
+  createNode(parent, san, fen, from, to) {
     return { id: generateId(), parent, san, fen, from, to, children: [] };
   }
-
-  public addMove(
-    move: string | { from: string; to: string; promotion?: string }
-  ): MoveNode | null {
+  addMove(move) {
     this.chess.load(this.currentNode.fen);
     let result;
     try {
@@ -39,7 +24,6 @@ export class MoveTree {
       return null;
     }
     if (!result) return null;
-
     const existingNode = this.currentNode.children.find(
       (child) => child.san === result.san
     );
@@ -47,7 +31,6 @@ export class MoveTree {
       this.currentNode = existingNode;
       return existingNode;
     }
-
     const newNode = this.createNode(
       this.currentNode,
       result.san,
@@ -59,8 +42,7 @@ export class MoveTree {
     this.currentNode = newNode;
     return newNode;
   }
-
-  public goBack(): MoveNode | null {
+  goBack() {
     if (this.currentNode.parent) {
       this.currentNode = this.currentNode.parent;
       this.chess.load(this.currentNode.fen);
@@ -68,8 +50,7 @@ export class MoveTree {
     }
     return null;
   }
-
-  public goForward(variationIndex: number = 0): MoveNode | null {
+  goForward(variationIndex = 0) {
     const childNode = this.currentNode.children[variationIndex];
     if (childNode) {
       this.currentNode = childNode;
@@ -78,9 +59,8 @@ export class MoveTree {
     }
     return null;
   }
-
-  public goToNode(nodeId: string): MoveNode | null {
-    const findNode = (node: MoveNode): MoveNode | null => {
+  goToNode(nodeId) {
+    const findNode = (node) => {
       if (node.id === nodeId) return node;
       for (const child of node.children) {
         const found = findNode(child);
@@ -95,50 +75,39 @@ export class MoveTree {
     }
     return targetNode;
   }
-
-  public getMainline(node: MoveNode = this.currentNode): MoveNode[] {
-    const line: MoveNode[] = [];
-    let current: MoveNode | null = node;
+  getMainline(node = this.currentNode) {
+    const line = [];
+    let current = node;
     while (current && current.parent) {
       line.push(current);
       current = current.parent;
     }
     return line.reverse();
   }
-
-  public getLegalMoves(node: MoveNode = this.currentNode): string[] {
+  getLegalMoves(node = this.currentNode) {
     this.chess.load(node.fen);
     return this.chess.moves();
   }
-
-  public getTurn(node: MoveNode = this.currentNode): "w" | "b" {
+  getTurn(node = this.currentNode) {
     this.chess.load(node.fen);
     return this.chess.turn();
   }
-
-  public loadPgn(pgn: string) {
+  loadPgn(pgn) {
     const reader = new PgnReader({ pgn });
     const games = reader.getGames();
     if (!games || games.length === 0) return;
     const parsedPgn = games[0];
-
-    const startFen =
-      parsedPgn.tags?.["FEN"] ||
-      "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-
+    const startFen = parsedPgn.tags?.["FEN"] || "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     this.chess = new Chess(startFen);
     this.root = this.createNode(null, "start", startFen, "a0", "a0");
-
     this.buildTreeFromParsed(parsedPgn.moves, this.root);
     this.currentNode = this.root;
     this.chess.load(this.root.fen);
   }
-
-  private buildTreeFromParsed(moves: any[], parentNode: MoveNode) {
+  buildTreeFromParsed(moves, parentNode) {
     if (!moves || moves.length === 0) return;
     this.chess.load(parentNode.fen);
     const mainMove = moves[0];
-
     try {
       const result = this.chess.move(mainMove.notation.notation);
       if (result) {
@@ -152,40 +121,32 @@ export class MoveTree {
         newNode.comment = mainMove.comment;
         newNode.nags = mainMove.nags;
         parentNode.children.push(newNode);
-
-        mainMove.variations.forEach((variation: any[]) => {
+        mainMove.variations.forEach((variation) => {
           this.buildTreeFromParsed(variation, parentNode);
         });
-
         this.buildTreeFromParsed(moves.slice(1), newNode);
       }
     } catch (e) {
-      /* Ignore illegal moves in PGN */
     }
   }
-
-  public toPgn(): string {
+  toPgn() {
     const writer = new PgnWriter();
-    const headers = new Map();
-    if (
-      this.root.fen !==
-      "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-    ) {
+    const headers = /* @__PURE__ */ new Map();
+    if (this.root.fen !== "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1") {
       headers.set("FEN", this.root.fen);
       headers.set("SetUp", "1");
     }
     const pgnData = { headers, moves: this.buildPgnMoves(this.root) };
     return writer.writePgn(pgnData);
   }
-
-  private buildPgnMoves(node: MoveNode): any[] {
+  buildPgnMoves(node) {
     if (node.children.length === 0) return [];
     const mainMoveNode = node.children[0];
-    const mainMovePgn: any = {
+    const mainMovePgn = {
       notation: { notation: mainMoveNode.san },
       comment: mainMoveNode.comment,
       nags: mainMoveNode.nags,
-      variations: [],
+      variations: []
     };
     for (let i = 1; i < node.children.length; i++) {
       const variationNode = node.children[i];
@@ -194,4 +155,82 @@ export class MoveTree {
     const nextMoves = this.buildPgnMoves(mainMoveNode);
     return [mainMovePgn, ...nextMoves];
   }
-}
+};
+
+// src/hooks/useMoveTree.ts
+var useMoveTree = (initialFen) => {
+  const moveTree = useRef(new MoveTree(initialFen));
+  const [currentNode, setCurrentNode] = useState(
+    moveTree.current.root
+  );
+  const addMove = useCallback(
+    (move) => {
+      const newNode = moveTree.current.addMove(move);
+      if (newNode) setCurrentNode(newNode);
+      return !!newNode;
+    },
+    []
+  );
+  const goBack = useCallback(() => {
+    const prevNode = moveTree.current.goBack();
+    if (prevNode) setCurrentNode(prevNode);
+  }, []);
+  const goForward = useCallback((variationIndex = 0) => {
+    const nextNode = moveTree.current.goForward(variationIndex);
+    if (nextNode) setCurrentNode(nextNode);
+  }, []);
+  const goToNode = useCallback((nodeId) => {
+    const targetNode = moveTree.current.goToNode(nodeId);
+    if (targetNode) setCurrentNode(targetNode);
+  }, []);
+  const reset = useCallback((fen2) => {
+    moveTree.current = new MoveTree(fen2);
+    setCurrentNode(moveTree.current.root);
+  }, []);
+  const loadPgn = useCallback((pgn) => {
+    moveTree.current.loadPgn(pgn);
+    setCurrentNode(moveTree.current.root);
+  }, []);
+  const toPgn = useCallback(() => {
+    return moveTree.current.toPgn();
+  }, []);
+  const fen = currentNode.fen;
+  const mainline = useMemo(
+    () => moveTree.current.getMainline(currentNode),
+    [currentNode]
+  );
+  const lastMove = useMemo(
+    () => currentNode.parent ? { from: currentNode.from, to: currentNode.to } : null,
+    [currentNode]
+  );
+  const legalMoves = useMemo(
+    () => moveTree.current.getLegalMoves(currentNode),
+    [currentNode]
+  );
+  const turn = useMemo(
+    () => moveTree.current.getTurn(currentNode),
+    [currentNode]
+  );
+  return {
+    fen,
+    turn,
+    mainline,
+    lastMove,
+    legalMoves,
+    variations: currentNode.children,
+    currentNode,
+    root: moveTree.current.root,
+    addMove,
+    goBack,
+    goForward,
+    goToNode,
+    reset,
+    loadPgn,
+    toPgn
+  };
+};
+export {
+  MoveTree,
+  useMoveTree
+};
+//# sourceMappingURL=index.mjs.map
