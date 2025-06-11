@@ -1,0 +1,12 @@
+# Build artifacts
+dist/
+node_modules/
+
+# Config files
+tsup.config.ts
+tsconfig.json
+tsconfig.build.json
+jest.config.js
+
+# Tests
+src/**/*.test.ts

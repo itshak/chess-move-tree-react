@@ -1,0 +1,111 @@
+{
+  "name": "chess-move-tree-react",
+  "version": "1.0.0",
+  "description": "A lightweight React hook for managing chess game state with full variation support.",
+  "private": false,
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "test": "jest",
+    "build": "tsup"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/chess-move-tree.git"
+  },
+  "keywords": [
+    "react",
+    "chess",
+    "pgn",
+    "variations",
+    "tree",
+    "chessboard",
+    "chess.js",
+    "hooks"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "peerDependencies": {
+    "chess.js": "^1.0.0-beta.6",
+    "react": ">=16.8.0"
+  },
+  "dependencies": {
+    "@mliebelt/pgn-reader": "^1.0.8",
+    "@mliebelt/pgn-writer": "^1.2.3"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/react": "^18.2.0",
+    "chess.js": "^1.0.0-beta.8",
+    "jest": "^29.7.0",
+    "react": "^18.2.0",
+    "ts-jest": "^29.1.2",
+    "tsup": "^8.0.2",
+    "typescript": "^5.4.5"
+  }
+}{
+  "name": "chess-move-tree",
+  "version": "1.0.0",
+  "description": "A lightweight React hook for managing chess game state with full variation support.",
+  "private": false,
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "test": "jest",
+    "build": "tsup"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/chess-move-tree.git"
+  },
+  "keywords": [
+    "react",
+    "chess",
+    "pgn",
+    "variations",
+    "tree",
+    "chessboard",
+    "chess.js",
+    "hooks"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "peerDependencies": {
+    "chess.js": "^1.0.0-beta.6",
+    "react": ">=16.8.0"
+  },
+  "dependencies": {
+    "@mliebelt/pgn-reader": "^1.0.8",
+    "@mliebelt/pgn-writer": "^1.2.3"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/react": "^18.2.0",
+    "chess.js": "^1.0.0-beta.8",
+    "jest": "^29.7.0",
+    "react": "^18.2.0",
+    "ts-jest": "^29.1.2",
+    "tsup": "^8.0.2",
+    "typescript": "^5.4.5"
+  }
+}
