@@ -8,4 +8,6 @@ export interface MoveNode {
   nags?: number[];
   parent: MoveNode | null;
   children: MoveNode[];
+  moveNumber: number;
+  turn: 'w' | 'b';
 }
